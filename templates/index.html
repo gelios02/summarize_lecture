@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+{% block title %}Новая лекция{% endblock %}
+{% block content %}
+<style>
+    /* Общий контейнер формы */
+    .form-container {
+        background: #ffffff;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        max-width: 500px;
+        width: 100%;
+        position: relative;
+        z-index: 1; /* Чтобы форма была выше частиц */
+    }
+
+    .form-container h2 {
+        text-align: center;
+        color: #3498db;
+        margin-bottom: 20px;
+    }
+
+    form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    /* Подписи */
+    label {
+        font-size: 14px;
+        margin-bottom: 5px;
+        color: #3498db;
+        font-weight: bold;
+    }
+
+    /* Подсказки (tooltip) */
+    .tooltip {
+        position: relative;
+        display: inline-block;
+    }
+    .tooltip .tooltiptext {
+        visibility: hidden;
+        width: 250px;
+        background-color: #555;
+        color: #fff;
+        text-align: center;
+        border-radius: 5px;
+        padding: 5px;
+        position: absolute;
+        z-index: 2;
+        bottom: 150%; /* Показываем над элементом */
+        left: 50%;
+        margin-left: -125px;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .tooltip:hover .tooltiptext {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    /* Drag & Drop область */
+    .file-input {
+        position: relative;
+        width: 100%;
+    }
+    .file-input input[type="file"] {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+    .file-input label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px dashed #3498db;
+        border-radius: 5px;
+        padding: 20px;
+        background-color: #f9fcff;
+        color: #3498db;
+        font-weight: bold;
+        text-align: center;
+        transition: background-color 0.2s, border-color 0.2s;
+    }
+    .file-input label:hover {
+        background-color: #e8f5ff;
+    }
+    /* Подсветка при перетаскивании */
+    .file-input label.dragover {
+        background-color: #d6f1ff;
+        border-color: #2980b9;
+    }
+
+    .file-name {
+        font-size: 14px;
+        color: #555;
+        margin-top: 5px;
+        text-align: center;
+    }
+
+    /* Стили для select */
+    select {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 16px;
+        width: 100%;
+        background-color: #f9fcff;
+        color: #3498db;
+        cursor: pointer;
+    }
+    select:hover {
+        background-color: #e8f5ff;
+    }
+
+    /* Стили для range */
+    input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 8px;
+        border-radius: 5px;
+        background: #ddd;
+        outline: none;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #3498db;
+        cursor: pointer;
+    }
+
+    .range-value {
+        text-align: center;
+        font-size: 16px;
+        color: #3498db;
+    }
+
+    /* Кнопка отправки */
+    .btn-submit,
+    button {
+        background-color: #3498db;
+        color: #ffffff;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        border: none;
+        padding: 10px;
+        border-radius: 5px;
+        text-align: center;
+    }
+    .btn-submit:hover,
+    button:hover {
+        background-color: #2980b9;
+    }
+
+    /* Loading overlay */
+    .loading-overlay {
+        display: none; /* Изначально скрыт */
+        text-align: center;
+        color: #3498db;
+        padding: 20px;
+    }
+    .loading-overlay.active {
+        display: block;
+    }
+    .spinner {
+        margin: 20px auto;
+        width: 40px;
+        height: 40px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        0%   { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+<!-- Анимация частиц на фоне -->
+<div id="particles-js" style="position: absolute; width: 100%; height: 100%; z-index: -1;"></div>
+
+<!-- Форма загрузки -->
+<div class="form-container" id="form-section">
+    <h2>Загрузка и суммаризация лекции</h2>
+    <!-- onsubmit вызывает showLoading() -->
+    <form action="{{ url_for('index') }}" method="POST" enctype="multipart/form-data" onsubmit="showLoading()">
+        <!-- Поле загрузки файла (Drag & Drop + tooltip) -->
+        <div class="tooltip">
+            <div class="file-input">
+                <label for="audio_file" id="drop-label">Перетащите сюда файл или нажмите для выбора</label>
+                <input type="file" id="audio_file" name="audio_file" accept="audio/*" required>
+            </div>
+            <div class="file-name" id="file-name">Файл не выбран</div>
+            <span class="tooltiptext">Загрузите аудиофайл с лекцией через проводник или перетаскивание</span>
+        </div>
+
+        <!-- Выбор языка + tooltip -->
+        <div class="tooltip">
+            <label for="language">Выберите язык:</label>
+            <select id="language" name="language" required>
+                <option value="en">English</option>
+                <option value="ru">Русский</option>
+            </select>
+            <span class="tooltiptext">Выберите язык лекции: русский или английский</span>
+        </div>
+
+        <!-- Смарт дополнения + tooltip -->
+        <div class="tooltip">
+            <label>
+                <input type="checkbox" id="smart_additions" name="smart_additions" value="True">
+                Смарт дополнения
+            </label>
+            <input type="hidden" name="smart_additions" value="False">
+            <span class="tooltiptext">ИИ сгенерирует подсказки для лучшего погружения в материал</span>
+        </div>
+
+        <!-- Уровень подробности + tooltip -->
+        <div class="tooltip">
+            <label for="detail_level">Уровень подробности:</label>
+            <input type="range" id="detail_level" name="detail_level" min="1" max="10" value="5">
+            <div class="range-value" id="range-value">5</div>
+            <span class="tooltiptext">Это уровень детализации для суммаризации вашей лекции</span>
+        </div>
+
+        <!-- Кнопка отправки -->
+        <button type="submit" class="btn-submit">Суммаризировать</button>
+    </form>
+</div>
+
+<!-- Блок загрузки (показывается после отправки формы) -->
+<div class="loading-overlay" id="loading-overlay">
+    <h3>Пожалуйста, подождите...</h3>
+    <p>Мы суммаризируем лекцию</p>
+    <div class="spinner"></div>
+</div>
+
+<script>
+    // Инициализация частиц
+    document.addEventListener("DOMContentLoaded", function() {
+        particlesJS("particles-js", {
+            "particles": {
+                "number": {"value": 80, "density": {"enable": true, "value_area": 800}},
+                "color": {"value": "#3498db"},
+                "shape": {"type": "circle", "stroke": {"width": 0, "color": "#000000"}},
+                "opacity": {"value": 0.5, "random": true},
+                "size": {"value": 4, "random": true},
+                "line_linked": {"enable": false},
+                "move": {"enable": true, "speed": 2, "direction": "none", "random": true}
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": {"onhover": {"enable": false}, "onclick": {"enable": false}}
+            },
+            "retina_detect": true
+        });
+    });
+
+    // Элементы
+    const fileInput = document.getElementById('audio_file');
+    const fileName = document.getElementById('file-name');
+    const dropLabel = document.getElementById('drop-label');
+    const rangeInput = document.getElementById('detail_level');
+    const rangeValue = document.getElementById('range-value');
+
+    // Отображаем имя выбранного файла
+    fileInput.addEventListener('change', function () {
+        fileName.textContent = this.files.length ? this.files[0].name : 'Файл не выбран';
+    });
+
+    // Слайдер уровня подробности
+    rangeInput.addEventListener('input', function () {
+        rangeValue.textContent = this.value;
+    });
+
+    // Логика Drag & Drop
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropLabel.addEventListener(eventName, e => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+    });
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropLabel.addEventListener(eventName, () => {
+            dropLabel.classList.add('dragover');
+        });
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropLabel.addEventListener(eventName, () => {
+            dropLabel.classList.remove('dragover');
+        });
+    });
+    dropLabel.addEventListener('drop', e => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length) {
+            fileInput.files = files;  // Привязываем к нашему input
+            fileInput.dispatchEvent(new Event('change')); // Обновляем название
+        }
+    });
+
+    // Функция показа загрузки
+    function showLoading() {
+        // Скрываем форму
+        document.getElementById('form-section').style.display = 'none';
+        // Показываем блок загрузки
+        document.getElementById('loading-overlay').classList.add('active');
+    }
+</script>
+
+{% endblock %}

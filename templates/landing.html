@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Добро пожаловать{% endblock %}
+
+{% block content_wrapper %}
+<div id="particles-js" style="position: absolute; width: 100%; height: 100%; z-index: -1;"></div>
+<div class="container" style="flex-direction: column; text-align: center;">
+  <h1 style="font-size: 42px; color: #3498db; margin-bottom: 20px;">LectionSum</h1>
+  <p style="font-size: 20px; margin-bottom: 30px;">
+    Интеллектуальная система для транскрибирования и суммаризации ваших лекций
+  </p>
+  <p>
+    <a href="{{ url_for('index') }}" style="display: inline-block; background-color: #3498db; color: #fff; padding: 15px 25px; text-decoration: none; border-radius: 5px; font-size: 18px;">Начать</a>
+  </p>
+</div>
+{% endblock %}
+
+{% block head %}
+{{ super() }}
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    particlesJS("particles-js", {
+      "particles": {
+        "number": {"value": 80, "density": {"enable": true, "value_area": 800}},
+        "color": {"value": "#3498db"},
+        "shape": {"type": "circle"},
+        "opacity": {"value": 0.5, "random": true},
+        "size": {"value": 4, "random": true},
+        "line_linked": {"enable": false},
+        "move": {"enable": true, "speed": 2, "direction": "none", "random": true}
+      },
+      "interactivity": {
+        "detect_on": "canvas",
+        "events": {"onhover": {"enable": false}, "onclick": {"enable": false}}
+      },
+      "retina_detect": true
+    });
+  });
+</script>
+
+{% endblock %}

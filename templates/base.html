@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>LectionSum - {% block title %}{% endblock %}</title>
+  <!-- Подключаем Particles.js из CDN (при необходимости) -->
+  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+  <style>
+    /* Сброс базовых отступов и общие стили */
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f8fb;
+      color: #333;
+      /* Flex-контейнер на всю высоту */
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    /* Частицы на фоне (fixed, чтобы не прокручивались) */
+    #particles-js {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+    header {
+      background-color: #fff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 999; /* Шапка выше частиц */
+    }
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+      color: #3498db;
+    }
+    .logo a {
+      text-decoration: none;
+      color: inherit;
+    }
+    .user-info a {
+      margin-left: 15px;
+      text-decoration: none;
+      color: #3498db;
+      font-weight: bold;
+    }
+    /* Основной контейнер, растягивающийся, чтобы футер был внизу */
+    .container {
+      flex: 1; /* занимает всё оставшееся место */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      position: relative; /* Если нужно перекрыть частицы */
+      z-index: 1;         /* Чтобы контент был выше частиц */
+    }
+    .flash-messages {
+      margin-bottom: 15px;
+    }
+    .flash-messages p {
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 5px;
+    }
+    .flash-messages p.success {
+      background-color: #e2f7e1;
+      color: #2d7c2c;
+    }
+    .flash-messages p.danger {
+      background-color: #fddede;
+      color: #9e1e1e;
+    }
+    .flash-messages p.warning {
+      background-color: #fff7e0;
+      color: #7f6a00;
+    }
+    .flash-messages p.info {
+      background-color: #e7f1ff;
+      color: #20558f;
+    }
+    footer {
+      background-color: #fff;
+      box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+      padding: 10px;
+      text-align: center;
+      font-size: 14px;
+      color: #aaa;
+      /* «Прилипание» к низу */
+      margin-top: auto; /* Отодвигает футер вниз */
+    }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <!-- Фон с частицами -->
+  <div id="particles-js"></div>
+
+  <header>
+    <div class="logo"><a href="{{ url_for('landing') }}">LectionSum</a></div>
+    <div class="user-info">
+      {% if current_user.is_authenticated %}
+        Привет, {{ current_user.username }} |
+        <a href="{{ url_for('logout') }}">Выход</a> |
+        <a href="{{ url_for('dashboard') }}">Мои лекции</a>
+      {% else %}
+        <a href="{{ url_for('login') }}">Вход</a> |
+        <a href="{{ url_for('register') }}">Регистрация</a>
+      {% endif %}
+    </div>
+  </header>
+
+  {% block content_wrapper %}
+  <div class="container">
+    <div>
+      <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <p class="{{ category }}">{{ message }}</p>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+      </div>
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+  {% endblock %}
+
+  <footer>
+    &copy; 2025 LectionSum
+  </footer>
+</body>
+
+</html>

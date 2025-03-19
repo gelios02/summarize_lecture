@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Вход{% endblock %}
+{% block content %}
+<style>
+  .form-box {
+    width: 350px;
+    background: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+  .form-box h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #3498db;
+    text-align: center;
+  }
+  .form-box label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+  }
+  .form-box input[type="text"],
+  .form-box input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+  }
+  .checkbox-remember {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  .checkbox-remember input {
+    margin-right: 5px;
+  }
+  .form-box button {
+    width: 100%;
+    background: #3498db;
+    color: #fff;
+    font-weight: bold;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    font-size: 16px;
+  }
+  .form-box button:hover {
+    background: #2980b9;
+  }
+  .form-box p {
+    text-align: center;
+    margin-top: 15px;
+  }
+  .form-box a {
+    color: #3498db;
+    text-decoration: none;
+    font-weight: bold;
+  }
+  .form-box a:hover {
+    text-decoration: underline;
+  }
+</style>
+
+<div class="form-box">
+  <h2>Вход</h2>
+  <form method="POST">
+    <label for="username">Имя пользователя:</label>
+    <input type="text" name="username" id="username" placeholder="Введите имя пользователя" required>
+
+    <label for="password">Пароль:</label>
+    <input type="password" name="password" id="password" placeholder="Введите пароль" required>
+
+    <div class="checkbox-remember">
+      <input type="checkbox" name="remember" id="remember">
+      <label for="remember" style="font-weight: normal; margin: 0;">Запомнить меня</label>
+    </div>
+
+    <button type="submit">Войти</button>
+
+    <p>Нет аккаунта? <a href="{{ url_for('register') }}">Зарегистрироваться</a></p>
+  </form>
+</div>
+
+{% endblock %}
