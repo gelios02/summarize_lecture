@@ -2,7 +2,6 @@ import os
 import secrets
 from datetime import datetime
 from io import BytesIO
-
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
@@ -12,8 +11,7 @@ from flask_login import (
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import markdown
-
-
+from sqlalchemy import or_
 from listen import transcribe_audio
 from summarizator import process_lecture
 
@@ -39,9 +37,9 @@ class User(db.Model, UserMixin):
 
 class Lecture(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=True)  # Поле для названия лекции
     timestamp = db.Column(db.String(100), nullable=False)  # Формат: YYYYMMDDHHMMSS
     summary = db.Column(db.Text, nullable=False)
-    # Сохраняем файлы в БД в виде бинарных данных
     docx_data = db.Column(db.LargeBinary)  # Содержимое DOCX
     pdf_data = db.Column(db.LargeBinary)   # Содержимое PDF
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -99,6 +97,7 @@ def get_generated_files():
 def landing():
     return render_template("landing.html")
 
+
 @app.route("/home", methods=["GET", "POST"])
 @login_required
 def index():
@@ -128,7 +127,12 @@ def index():
             docx_data, pdf_data = get_generated_files()
 
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            # Получаем текущее число лекций для пользователя
+            lecture_count = Lecture.query.filter_by(user_id=current_user.id).count()
+            default_title = "Лекция " + str(lecture_count + 1)
+
             lecture = Lecture(
+                title=default_title,  # Присваиваем автоматически название
                 timestamp=timestamp,
                 summary=processed_text,
                 docx_data=docx_data,
@@ -140,6 +144,7 @@ def index():
 
             return redirect(url_for("result", lecture_id=lecture.id))
     return render_template("index.html")
+
 
 @app.route("/result")
 @login_required
@@ -245,9 +250,14 @@ def dashboard():
     # Базовый запрос: все лекции текущего пользователя
     lectures_query = Lecture.query.filter_by(user_id=current_user.id)
 
-    # Фильтр по содержанию (summary) через LIKE
+    # Фильтр по содержанию (summary) И названию (title) через LIKE
     if search_query:
-        lectures_query = lectures_query.filter(Lecture.summary.like(f"%{search_query}%"))
+        lectures_query = lectures_query.filter(
+            or_(
+                Lecture.title.like(f"%{search_query}%"),
+                Lecture.summary.like(f"%{search_query}%")
+            )
+        )
 
     # Фильтр по дате: преобразуем дату из формы (YYYY-MM-DD) в префикс YYYYMMDD
     def date_to_timestamp_prefix(dstr):
@@ -281,6 +291,23 @@ def dashboard():
         formatted_lectures.append(lecture)
 
     return render_template("dashboard.html", lectures=formatted_lectures)
+
+@app.route('/edit_lecture_title/<int:lecture_id>', methods=['POST'])
+@login_required
+def edit_lecture_title(lecture_id):
+    lecture = Lecture.query.filter_by(id=lecture_id, user_id=current_user.id).first()
+    if not lecture:
+        flash("Лекция не найдена", "danger")
+        return redirect(url_for("dashboard"))
+    new_title = request.form.get("title", "").strip()
+    if new_title:
+        lecture.title = new_title
+        db.session.commit()
+        flash("Название лекции обновлено", "success")
+    else:
+        flash("Название не может быть пустым", "warning")
+    return redirect(url_for("dashboard"))
+
 
 if __name__ == "__main__":
     create_database()

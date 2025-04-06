@@ -1,5 +1,52 @@
 {% extends "base.html" %}
 {% block title %}Мои лекции{% endblock %}
+{% block head %}
+<style>
+  .lecture-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #2c3e50;
+  }
+  .edit-button {
+    margin-left: 15px;
+    padding: 5px 10px;
+    font-size: 14px;
+    border: none;
+    border-radius: 4px;
+    background-color: #2980b9;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  .edit-button:hover {
+    background-color: #1c5980;
+  }
+  .edit-form {
+    margin-bottom: 10px;
+  }
+  .edit-form input[type="text"] {
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  .edit-form button {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .save-button {
+    background-color: #27ae60;
+    color: #fff;
+  }
+  .cancel-button {
+    background-color: #bdc3c7;
+    color: #333;
+    margin-left: 5px;
+  }
+</style>
+{% endblock %}
 {% block content %}
 <div style="width: 900px; margin:auto;">
   <h2 style="color:#3498db; margin-bottom:20px; text-align:center;">Мои лекции</h2>
@@ -35,7 +82,22 @@
       {% for lecture in lectures %}
       <li style="background:#fff; padding:15px; border-radius:8px; margin-bottom:15px; box-shadow:0 2px 5px rgba(0,0,0,0.1);">
         <p><strong>Дата:</strong> {{ lecture.formatted_timestamp }}</p>
-        <p><strong>Лекция:</strong></p>
+        <p>
+          <span class="lecture-title" id="lecture-title-{{ lecture.id }}">
+            {{ lecture.title if lecture.title else "Лекция" }}
+          </span>
+          <button onclick="showEditForm({{ lecture.id }})" class="edit-button">Редактировать</button>
+        </p>
+        <!-- Форма редактирования названия, скрыта по умолчанию -->
+        <div id="edit-form-{{ lecture.id }}" class="edit-form" style="display: none;">
+          <form method="POST" action="{{ url_for('edit_lecture_title', lecture_id=lecture.id) }}">
+            <input type="text" name="title"
+                   value="{{ lecture.title if lecture.title else "Лекция" }}"
+                   required>
+            <button type="submit" class="save-button">Сохранить</button>
+            <button type="button" onclick="hideEditForm({{ lecture.id }})" class="cancel-button">Отмена</button>
+          </form>
+        </div>
         <div style="padding:10px; border:1px solid #ddd; border-radius:5px; background:#f9f9f9; max-height:200px; overflow-y:auto; line-height:1.5;">
           {{ lecture.html_summary | safe }}
         </div>
@@ -61,4 +123,13 @@
   {% endif %}
 </div>
 
+
+<script>
+  function showEditForm(lectureId) {
+    document.getElementById("edit-form-" + lectureId).style.display = "block";
+  }
+  function hideEditForm(lectureId) {
+    document.getElementById("edit-form-" + lectureId).style.display = "none";
+  }
+</script>
 {% endblock %}

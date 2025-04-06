@@ -125,7 +125,7 @@
   {% block content_wrapper %}
   <div class="container">
     <div>
-      <div class="flash-messages">
+      <div class="flash-messages" id="flash-messages">
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             {% for category, message in messages %}
@@ -142,6 +142,15 @@
   <footer>
     &copy; 2025 LectionSum
   </footer>
-</body>
 
+
+  <script>
+    setTimeout(function(){
+      var flashMessages = document.getElementById("flash-messages");
+      if (flashMessages) {
+        flashMessages.style.display = "none";
+      }
+    }, 1000);
+  </script>
+</body>
 </html>
